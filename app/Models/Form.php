@@ -11,7 +11,6 @@ class Form extends Model
     protected $fillable = [
 
         'subject',
-        'message',
-        'emails_list'
+        'message'
     ];
 }
