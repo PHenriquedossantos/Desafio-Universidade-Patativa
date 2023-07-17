@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendFormEmailJob;
+use App\Jobs\SaveEmail;
 use Illuminate\Http\Request;
 use App\Models\Form;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\DB;
+use App\Models\EmailList;
+use Symfony\Component\Mime\Email;
 
 
 class FormController extends Controller
 {
     public function index()
     {
-        return view('forms.index');
+        return view('forms.create');
     }
     public function create()
     {
@@ -21,20 +23,20 @@ class FormController extends Controller
     }
     public function store(Request $request)
     {
-        //dd($request);
+
         $data = $request->validate([
             'subject' => 'required',
             'message' => 'required',
-            'emails_list' => 'required',
             'description' => 'nullable'
         ]);
 
-        DB::transaction(function () use ($data) {
-            $newProduct = Form::create($data);
-            Queue::push(new SendFormEmailJob($newProduct));
-        });
+        DB::transaction(function () use ($request) {
+            $form = Form::create($request->all());
+            Queue::push(new SaveEmail($request->input('emails_list'), $form->id));
 
+        });
 
         return redirect(route('forms.index'));
     }
+
 }
