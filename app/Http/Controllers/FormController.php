@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 use App\Models\Form;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\DB;
-use App\Models\EmailList;
-use Symfony\Component\Mime\Email;
-
 
 class FormController extends Controller
 {
@@ -17,26 +14,36 @@ class FormController extends Controller
     {
         return view('forms.create');
     }
+
     public function create()
     {
         return view('forms.create');
     }
+
     public function store(Request $request)
     {
 
-        $data = $request->validate([
-            'subject' => 'required',
-            'message' => 'required',
-            'description' => 'nullable'
-        ]);
+        DB::beginTransaction();
 
-        DB::transaction(function () use ($request) {
+        try {
             $form = Form::create($request->all());
-            Queue::push(new SaveEmail($request->input('emails_list'), $form->id));
 
-        });
+            $data = $request->validate([
+                'subject' => 'required',
+                'message' => 'required',
+                'emails_list' => 'nullable'
+            ]);
+
+            Queue::push(new SaveEmail($data, $form->id));
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+            throw $e;
+        }
 
         return redirect(route('forms.index'));
     }
-
 }
