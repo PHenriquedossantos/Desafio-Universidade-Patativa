@@ -32,7 +32,6 @@ class SaveEmail implements ShouldQueue
                 'message' => $this->request['message'],
                 'subject' => $this->request['subject'],
             ]));
-            dd($response);
         }
     }
 }
